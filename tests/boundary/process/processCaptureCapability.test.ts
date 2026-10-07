@@ -46,6 +46,16 @@ describe("process capture capability diagnostics", () => {
     });
   });
 
+  it("explains how to supply a PTY backend on hosts without prebuilts", () => {
+    expect(
+      processCaptureProbeFailureReason(
+        new Error(
+          "The @lydell/node-pty package currently does not support your platform: freebsd-x64",
+        ),
+      ),
+    ).toContain("install the source-built node-pty package");
+  });
+
   it("preserves the actual diagnostic for a genuine probe failure", () => {
     expect(
       processCaptureProbeFailureReason(new Error("spawn EACCES")),

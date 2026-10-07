@@ -79,7 +79,9 @@ const installSessionToolAvailability = (
           isAbsolute(process.env.REA_UNBLOB_COMMAND ?? "")),
       androidAnalysisEnabled:
         options.androidAnalysis !== undefined ||
-        ((process.platform === "linux" || process.platform === "darwin") &&
+        ((process.platform === "linux" ||
+          process.platform === "darwin" ||
+          process.platform === "freebsd") &&
           isAbsolute(process.env.REA_JADX_MCP_JAR ?? "")),
       browserObservationEnabled: options.browserObservation !== undefined,
       javascriptRecoveryEnabled:

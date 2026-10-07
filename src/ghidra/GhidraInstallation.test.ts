@@ -362,3 +362,50 @@ describe("Ghidra release line and JDK bounds", () => {
     ).toMatchObject({ status: "available", javaVersion: "17.0.20.1" });
   });
 });
+
+describe("FreeBSD Ghidra installation inspection", () => {
+  it.each(["x64", "arm64"] as const)(
+    "accepts FreeBSD %s with port-built native tools",
+    (architecture) => {
+      const install = "/usr/local/share/ghidra";
+      const decompiler = `${install}/Ghidra/Features/Decompiler/os/${architecture === "arm64" ? "freebsd_arm_64" : "freebsd_x86_64"}/decompile`;
+      const freebsdHost = host({
+        readText: (path) =>
+          path === `${install}/Ghidra/application.properties`
+            ? `application.version=${SUPPORTED_GHIDRA_VERSION}\n`
+            : undefined,
+        executable: (path) =>
+          path === `${install}/support/analyzeHeadless` || path === decompiler,
+      });
+      expect(
+        inspectGhidraInstallation(
+          { installDir: install, platform: "freebsd", architecture },
+          freebsdHost,
+        ),
+      ).toMatchObject({
+        status: "available",
+        platform: "freebsd",
+        architecture,
+        nativeDecompilerPath: decompiler,
+      });
+    },
+  );
+
+  it("rejects FreeBSD installations without a native decompiler", () => {
+    const inspection = inspectGhidraInstallation(
+      { installDir: INSTALL, platform: "freebsd", architecture: "x64" },
+      host({ executable: (path) => path === HEADLESS }),
+    );
+    expect(inspection).toMatchObject({
+      status: "unavailable",
+      nativeDecompilerPath: null,
+      rejection: { code: "executable_missing" },
+    });
+    expect(
+      inspection.checks.find((check) => check.name === "native_decompiler"),
+    ).toMatchObject({
+      status: "failed",
+      detail: "matching FreeBSD native decompiler was not found",
+    });
+  });
+});

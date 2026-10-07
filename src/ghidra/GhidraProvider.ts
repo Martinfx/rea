@@ -96,6 +96,21 @@ export type GhidraProviderClientFactory = (
   Partial<Pick<GhidraClient, "runtimeLineage" | "readTargetSnapshot">>;
 
 /** Ghidra candidate backed by an isolated ephemeral headless import. */
+const hostProviderLimitations = (
+  platform: NodeJS.Platform,
+): readonly string[] => {
+  if (platform === "win32") return windowsP0Limitations;
+  if (platform === "darwin")
+    return [
+      "macOS sessions require a matching executable Ghidra native decompiler; REA checks for it but does not build native components or change Gatekeeper quarantine state.",
+    ];
+  if (platform === "freebsd")
+    return [
+      "FreeBSD sessions require a matching executable Ghidra native decompiler, such as the one installed by the devel/ghidra port; REA checks for it but does not build native components. FreeBSD has no real-provider verification.",
+    ];
+  return [];
+};
+
 export class GhidraProvider implements AnalysisProviderCandidate {
   #installation: GhidraInstallationInspection | undefined;
 
@@ -277,14 +292,7 @@ export class GhidraProvider implements AnalysisProviderCandidate {
             "Static DOS analysis does not emulate BIOS, DOS interrupts, device ports, or self-modifying unpacking code. Packed targets require a separately identified unpacked artifact for original-program analysis; appended overlays are not the initialized load module.",
           ]
         : [];
-    const providerLimitations =
-      installation.platform === "win32"
-        ? windowsP0Limitations
-        : installation.platform === "darwin"
-          ? [
-              "macOS sessions require a matching executable Ghidra native decompiler; REA checks for it but does not build native components or change Gatekeeper quarantine state.",
-            ]
-          : [];
+    const providerLimitations = hostProviderLimitations(installation.platform);
     const client = this.clientFactory({
       platform: installation.platform,
       launcher: new GhidraHeadlessLauncher({

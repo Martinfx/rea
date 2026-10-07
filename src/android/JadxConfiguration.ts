@@ -18,9 +18,13 @@ export const resolveJadxConfiguration = async (
 ): Promise<JadxConfiguration> => {
   const unavailable = (reason: string) =>
     new AnalysisCapabilityUnavailableError("jadx", operation, reason);
-  if (process.platform !== "linux" && process.platform !== "darwin")
+  if (
+    process.platform !== "linux" &&
+    process.platform !== "darwin" &&
+    process.platform !== "freebsd"
+  )
     throw unavailable(
-      `Android JADX subprocess ownership is unsupported on ${process.platform}; use Linux or macOS. Only Linux has real-provider verification.`,
+      `Android JADX subprocess ownership is unsupported on ${process.platform}; use Linux, macOS, or FreeBSD. Only Linux has real-provider verification.`,
     );
   const jar = environment.REA_JADX_MCP_JAR;
   if (environment.JAVA_HOME !== undefined && !isAbsolute(environment.JAVA_HOME))

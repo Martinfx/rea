@@ -3,7 +3,11 @@ import { expect, it } from "vitest";
 import { snapshotRoots } from "./FilesystemSnapshot.js";
 import { buildCaptureResult } from "./ProcessCaptureLifecycle.js";
 import { normalizeProcessSamples } from "./ProcessNormalization.js";
-import { isInitializedPtyRoot, readLinuxChildren } from "./ProcessSampling.js";
+import {
+  isInitializedPtyRoot,
+  psSessionKeyword,
+  readLinuxChildren,
+} from "./ProcessSampling.js";
 import { TerminalRenderer } from "./TerminalRenderer.js";
 import {
   compareProcessCaptures,
@@ -291,4 +295,10 @@ it("parses bounded scenarios and rejects unordered events", () => {
       events: [{ type: "input", at_ms: timeoutMs + 1, data: "late" }],
     }),
   ).toThrow(/after the scenario timeout/);
+});
+
+it("reads numeric session IDs from each host ps dialect", () => {
+  expect(psSessionKeyword("darwin")).toBe("sess");
+  expect(psSessionKeyword("linux")).toBe("sess");
+  expect(psSessionKeyword("freebsd")).toBe("sid");
 });

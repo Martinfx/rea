@@ -47,6 +47,7 @@ import {
 import { makeProcessCaptureEnvironment } from "./ProcessCaptureEnvironment.js";
 import { classifyFilesystemEffects } from "./ProcessFilesystemEffects.js";
 import { processCaptureOwnershipUnavailableReason } from "./ProcessCaptureCapability.js";
+import { loadPtyModule } from "./ProcessPtyModule.js";
 export { probeProcessCaptureCapability } from "./ProcessCaptureCapability.js";
 
 interface StartedCaptureRuntime {
@@ -118,7 +119,7 @@ const startCaptureRuntime = async (
   let renderer: TerminalRenderer | undefined;
   let terminal: IPty | undefined;
   try {
-    const { spawn } = await import("@lydell/node-pty");
+    const { spawn } = await loadPtyModule();
     const startedAt = new Date();
     const started = Date.now();
     let lastOutput = started;

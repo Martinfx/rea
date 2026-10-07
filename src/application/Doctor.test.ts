@@ -22,7 +22,7 @@ describe("doctor", () => {
       ),
     ).toEqual({
       node: `Install ${SUPPORTED_NODE_VERSION_PROSE}.`,
-      host: "REA supports macOS 12+, Ubuntu 24.04+, Fedora 41+, 64-bit Arch Linux, and the experimental Windows x64 Ghidra P0 boundary.",
+      host: "REA supports macOS 12+, Ubuntu 24.04+, Fedora 41+, 64-bit Arch Linux, FreeBSD x64/arm64 without Hopper, and the experimental Windows x64 Ghidra P0 boundary.",
       hopper: "Run rea setup to install Hopper, or set HOPPER_LAUNCHER_PATH.",
       target: "Supply a readable local app or program path.",
     });
@@ -522,5 +522,25 @@ describe("doctor target admission diagnostics", () => {
       }),
     );
     expect(result.checks).toContainEqual(targetCheck);
+  });
+});
+
+describe("doctor FreeBSD host", () => {
+  it("admits FreeBSD x64 and arm64 hosts", async () => {
+    for (const architecture of ["x64", "arm64"] as const) {
+      const result = await runDoctor(
+        undefined,
+        host({
+          platform: "freebsd",
+          architecture,
+          macosVersion: () => Promise.resolve(undefined),
+          executable: () => Promise.resolve(false),
+        }),
+      );
+      expect(result.checks.find(({ name }) => name === "host")).toMatchObject({
+        ok: true,
+        detail: `freebsd ${architecture}`,
+      });
+    }
   });
 });

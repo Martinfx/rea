@@ -1,5 +1,7 @@
 import { tmpdir } from "node:os";
 
+import { loadPtyModule, type PtyModule } from "./ProcessPtyModule.js";
+
 export type ProcessCaptureCapability =
   | { readonly available: true; readonly backend: "node-pty" }
   | {
@@ -19,7 +21,7 @@ export const processCaptureOwnershipUnavailableReason = (
 /** Dependencies that make the native PTY probe's host boundary testable. */
 export interface ProcessCaptureProbeOptions {
   readonly platform?: NodeJS.Platform;
-  readonly loadPty?: () => Promise<typeof import("@lydell/node-pty")>;
+  readonly loadPty?: () => Promise<PtyModule>;
 }
 
 /** Probe the native PTY seam and explain loader failures at their source. */
@@ -27,6 +29,8 @@ export const processCaptureProbeFailureReason = (cause: unknown): string => {
   const error = cause instanceof Error ? cause : new Error(String(cause));
   const code = "code" in error ? String(error.code) : "";
   const diagnostic = error.message;
+  if (/does not support your platform/iu.test(diagnostic))
+    return `no prebuilt native PTY binary exists for this host (${diagnostic}); install the source-built node-pty package where REA can resolve it (for example, run npm install node-pty in the REA package directory)`;
   if (
     code === "ERR_MODULE_NOT_FOUND" ||
     code === "MODULE_NOT_FOUND" ||
@@ -57,9 +61,7 @@ export const probeProcessCaptureCapability = async (
       reason: ownershipReason,
     };
   try {
-    const { spawn } = await (
-      options.loadPty ?? (() => import("@lydell/node-pty"))
-    )();
+    const { spawn } = await (options.loadPty ?? (() => loadPtyModule()))();
     const terminal = spawn(
       platform === "win32" ? "cmd.exe" : "/bin/sh",
       platform === "win32" ? ["/c", "exit", "0"] : ["-c", "exit 0"],

@@ -107,7 +107,9 @@ const hostCheck = async (host: DoctorHost): Promise<DoctorCheck> => {
   const supported =
     (host.platform === "darwin" && parseMajor(macosVersion) >= 12) ||
     (host.platform === "linux" && linuxDistribution?.supported === true) ||
-    (host.platform === "win32" && host.architecture === "x64");
+    (host.platform === "win32" && host.architecture === "x64") ||
+    (host.platform === "freebsd" &&
+      (host.architecture === "x64" || host.architecture === "arm64"));
   const detail =
     macosVersion ??
     (linuxDistribution === undefined
@@ -115,7 +117,7 @@ const hostCheck = async (host: DoctorHost): Promise<DoctorCheck> => {
       : `${linuxDistribution.id} ${linuxDistribution.versionId ?? "unknown"}`);
   return check("host", supported, detail, {
     remediation:
-      "REA supports macOS 12+, Ubuntu 24.04+, Fedora 41+, 64-bit Arch Linux, and the experimental Windows x64 Ghidra P0 boundary.",
+      "REA supports macOS 12+, Ubuntu 24.04+, Fedora 41+, 64-bit Arch Linux, FreeBSD x64/arm64 without Hopper, and the experimental Windows x64 Ghidra P0 boundary.",
     classification: "unsupported_host",
   });
 };

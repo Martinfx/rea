@@ -63,9 +63,9 @@ const claudeDesktopDirectory = ({
 }: ClientPathContext): string => {
   if (platform === "win32")
     return join(env.APPDATA ?? join(home, "AppData", "Roaming"), "Claude");
-  if (platform === "linux")
-    return join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "Claude");
-  return join(home, "Library", "Application Support", "Claude");
+  if (platform === "darwin")
+    return join(home, "Library", "Application Support", "Claude");
+  return join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "Claude");
 };
 
 const claudeCodeConfigDirectory = ({ home, env }: ClientPathContext): string =>

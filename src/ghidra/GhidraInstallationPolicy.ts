@@ -218,3 +218,23 @@ const propertyValue = (content: string, name: string): string | null => {
   }
   return null;
 };
+
+/**
+ * Hosts whose native decompiler is absent from, or not executable in, an
+ * official extracted release and must therefore be checked before launch.
+ */
+export const requiresBuiltNativeDecompiler = (
+  platform: NodeJS.Platform,
+): boolean => platform === "darwin" || platform === "freebsd";
+
+/** Ghidra `os/<platform>` directory name for hosts whose decompiler REA checks. */
+export const nativeDecompilerPlatform = (
+  platform: NodeJS.Platform,
+  architecture: NodeJS.Architecture,
+): string | null => {
+  if (platform === "darwin")
+    return architecture === "arm64" ? "mac_arm_64" : "mac_x86_64";
+  if (platform === "freebsd")
+    return architecture === "arm64" ? "freebsd_arm_64" : "freebsd_x86_64";
+  return null;
+};

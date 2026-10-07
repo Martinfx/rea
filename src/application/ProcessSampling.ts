@@ -305,12 +305,20 @@ const sampleLinux = async (
   return rows;
 };
 
+/**
+ * Numeric session-ID keyword for the host `ps`. FreeBSD's `sess` reports a
+ * kernel session pointer; its numeric session ID is `sid`.
+ */
+export const psSessionKeyword = (
+  platform: NodeJS.Platform = process.platform,
+): "sess" | "sid" => (platform === "freebsd" ? "sid" : "sess");
+
 const readPsRows = async (
   signal: AbortSignal,
 ): Promise<readonly ProcessRow[]> => {
   const { stdout } = await execFileOutput(
     "ps",
-    ["-axo", "pid=,ppid=,pgid=,sess=,command="],
+    ["-axo", `pid=,ppid=,pgid=,${psSessionKeyword()}=,command=`],
     { signal },
   );
   return stdout

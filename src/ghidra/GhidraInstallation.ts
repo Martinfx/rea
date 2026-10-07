@@ -14,6 +14,8 @@ import {
   ghidraReleaseCompatibility,
   ghidraReleaseLine,
   ghidraVersionDetail,
+  nativeDecompilerPlatform,
+  requiresBuiltNativeDecompiler,
   SUPPORTED_GHIDRA_JAVA_MAJOR,
   SUPPORTED_GHIDRA_VERSION,
   type GhidraApplicationProperties,
@@ -228,12 +230,7 @@ const installationCoordinates = (
           "support",
           platform === "win32" ? "analyzeHeadless.bat" : "analyzeHeadless",
         );
-  const decompilerPlatform =
-    platform === "darwin"
-      ? architecture === "arm64"
-        ? "mac_arm_64"
-        : "mac_x86_64"
-      : null;
+  const decompilerPlatform = nativeDecompilerPlatform(platform, architecture);
   const nativeDecompilerPath =
     installDir === null || decompilerPlatform === null
       ? null
@@ -306,22 +303,26 @@ const installationChecks = ({
   installationCheck({
     name: "platform",
     passed:
-      platform === "linux" || platform === "win32" || platform === "darwin",
+      platform === "linux" ||
+      platform === "win32" ||
+      platform === "darwin" ||
+      platform === "freebsd",
     code: "unsupported_host",
     detail: platform,
     remediation:
-      "Use Linux or Windows x64, or macOS x64/arm64 with matching native Ghidra tools.",
+      "Use Linux or Windows x64, or macOS or FreeBSD x64/arm64 with matching native Ghidra tools.",
   }),
   installationCheck({
     name: "architecture",
     passed:
       ((platform === "linux" || platform === "win32") &&
         architecture === "x64") ||
-      (platform === "darwin" &&
+      ((platform === "darwin" || platform === "freebsd") &&
         (architecture === "x64" || architecture === "arm64")),
     code: "unsupported_host",
     detail: architecture,
-    remediation: "Use x64 on Linux or Windows, or x64/arm64 on macOS.",
+    remediation:
+      "Use x64 on Linux or Windows, or x64/arm64 on macOS or FreeBSD.",
   }),
   installationCheck({
     name: "installation",
@@ -346,15 +347,18 @@ const installationChecks = ({
   }),
   installationCheck({
     name: "native_decompiler",
-    passed: platform !== "darwin" || coordinates.nativeDecompilerPath !== null,
+    passed:
+      !requiresBuiltNativeDecompiler(platform) ||
+      coordinates.nativeDecompilerPath !== null,
     code: "executable_missing",
-    detail:
-      platform !== "darwin"
-        ? "not required on this platform"
-        : (coordinates.nativeDecompilerPath ??
-          "matching macOS native decompiler was not found"),
+    detail: !requiresBuiltNativeDecompiler(platform)
+      ? "not required on this platform"
+      : (coordinates.nativeDecompilerPath ??
+        `matching ${platform === "freebsd" ? "FreeBSD" : "macOS"} native decompiler was not found`),
     remediation:
-      "REA does not build native tools. Build Ghidra's native components for this macOS architecture or provide an installation containing Ghidra/Features/Decompiler/os/<platform>/decompile.",
+      platform === "freebsd"
+        ? "REA does not build native tools. Official Ghidra releases omit FreeBSD native components; install the devel/ghidra port or build Ghidra's native components so the installation contains Ghidra/Features/Decompiler/os/<platform>/decompile."
+        : "REA does not build native tools. Build Ghidra's native components for this macOS architecture or provide an installation containing Ghidra/Features/Decompiler/os/<platform>/decompile.",
   }),
   javaCheck(
     coordinates.java,

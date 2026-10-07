@@ -401,6 +401,25 @@ describe("platform-aware client config paths", () => {
     },
   );
 
+  it.each([
+    ["darwin", "/Users/a/Library/Application Support/Claude"],
+    ["linux", "/config/Claude"],
+    ["freebsd", "/config/Claude"],
+  ] as const)(
+    "resolves the Claude Desktop configuration root for %s",
+    (platform, expected) => {
+      expect(
+        supportedClients(
+          platform === "darwin" ? "/Users/a" : "/home/a",
+          platform,
+          {
+            XDG_CONFIG_HOME: "/config",
+          },
+        ).find(({ name }) => name === "claude_desktop")?.configPath,
+      ).toBe(`${expected}/claude_desktop_config.json`);
+    },
+  );
+
   it("honors Copilot CLI and Devin platform configuration roots", () => {
     expect(
       supportedClients("/home/a", "linux", {
